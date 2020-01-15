@@ -88,21 +88,21 @@ put_single = function (element) {
 //    }, ..
 //   ]
 app.get('/coco', function (req, res) {
-    logger.log('req.body: ',JSON.stringify(req.body));
+    const prms = req && req.query;
+    const { roles='' } = prms;
+    logger.log('roles: ',roles);
     let filter = {};
-    if (req.body.roles) { // prepare filter for roles
-        logger.info('Performing lookup by roles ', JSON.stringify(req.body.roles),' ..');
+    if (roles) { // prepare filter for roles
+        let roleArray = roles.split(",");
+        logger.info('Performing lookup by roles ', roleArray,' ..');
+
         filter.role = {};
-        filter.role.$in = req.body.roles;
+        filter.role.$in = roleArray;
         logger.debug('Using filter: ',JSON.stringify(filter));
         // .find({ title: { $regex: '.*' + input + '.*' } }).limit(5).then((notes)
         // { field: { $in: [<value1>, <value2>, ... <valueN> ] } }
-    } else if (req.body.content_id) { // prepare filter for content_id
-        logger.info('Performing lookup by content_id ..');
-        // decide whether makes sense
-        res.send('Not implemented');
     } else {
-        res.send('Insufficient input: Either roles or content_id must be specified!');
+        res.send('Insufficient input: Roles must be specified!');
         return;
     }
 
