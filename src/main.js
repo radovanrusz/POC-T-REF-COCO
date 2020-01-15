@@ -6,6 +6,20 @@ const logger = require('./logger/logger');
 const app = express();
 const port = process.env.PORT || 3100;
 
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader(
+        'Access-Control-Allow-Methods', 
+        'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+    )
+    res.setHeader(
+        'Access-Control-Allow-Headers', 
+        'Cache-Control, Pragma, Origin, ' +
+        'Authorization, Content-Type, X-Requested-With'
+    )
+    res.setHeader('Access-Control-Allow-Credentials', true)
+    next()
+});
 app.use(express.json());
 
 // req: [ { 'role': '<rolename>', 'content_id': '<content_id>', 'read': true, 'write': false }, {..}, .. ]
