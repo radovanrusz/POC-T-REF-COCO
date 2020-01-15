@@ -17,34 +17,6 @@ app.put('/coco', function(req, res) {
             promises.push(put_single(element).then(function(inst) {
                 return (inst);
             }))
-
-            // // TODO: check input attributes
-            // if (true) {
-            //     logger.info('  Processing element: ',JSON.stringify(element));
-                
-            //     Right.findOne({$and: [{ role : element.role }, { content_id: element.content_id }]}, function(err, res) {
-            //         if(err) {
-            //             logger.error('findById caused error: ',JSON.stringify(err));
-            //         } else {
-            //             logger.info('findById found doc: ',JSON.stringify(res));
-            //             if(!res) {
-            //                 res = new Right(element);
-            //             } else {
-            //                 res.read = element.read;
-            //                 res.write = element.write;
-            //             }
-            //             res.save().then(function(res2) {
-            //                 logger.info('Element ',JSON.stringify(element),' saved as doc ',JSON.stringify(res2));
-            //                 response.push(res2);
-            //             }).catch(function(error) {
-            //                 logger.error('Element save caused error: ', error);
-            //                 response.push('Request item: ',JSON.stringify(element), ' finished with error: ', error);
-            //             });
-            //         }
-            //     });
-            // }
-
-
         });
         Promise.all(promises).then(function(resp){
             logger.info('sending response: ', JSON.stringify(resp));
@@ -86,7 +58,7 @@ put_single = function (element) {
     });
 }
 
-// req: { 'content_id': '<value>' } or { 'roles': ['<role1>', '<role2>',..]]}
+// req: { 'roles': ['<role1>', '<role2>',..]]} or (not implemented) { 'content_id': '<value>' } 
 // TODO: return last version of doc
 // response:
 // [
@@ -124,16 +96,30 @@ app.get('/coco', function (req, res) {
         logger.info('result: ',JSON.stringify(result));
         let resp = [];
         result.forEach(function(rec){
-            let resp_element = {};
-            
-            resp_element.content_id = rec.content_id;
-            resp_element.read = rec.read;
-            resp_element.write = rec.write;
-            resp.push(resp_element);
+            logger.info("Processing record: " + JSON.stringify(rec));
+            // check whether current content_id is not already in resp
+            let found = false;
+            resp.some(function(element,index,array) {
+                logger.info("Matching element " + JSON.stringify(element));
+                logger.info("Comparing element content_id:" + element.content_id + " with response rec content_id:" + rec.content_id);
+                if (element.content_id == rec.content_id) {
+                    logger.info("Found match at ix: " + index);
+                    array[index].read = array[index].read || rec.read;
+                    array[index].write = array[index].write || rec.write;
+                    found = true;
+                    return found;
+                }
+            });
+            if (!found) {
+                logger.info("Inserting a new element to response")
+                let resp_element = {};
+                resp_element.content_id = rec.content_id;
+                resp_element.read = rec.read;
+                resp_element.write = rec.write;
+                resp.push(resp_element);
+            }
         });
-        // TODO: process result => resp
-        // fill roles
-        // iterate returned documents and U'em into final structure
+        logger.info("Sending response..");
         res.send(resp);
     }).catch(function (error) {
         res.status(500).send(error);
